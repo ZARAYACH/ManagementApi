@@ -1,6 +1,7 @@
 package com.example.managementApi.WorkingDay;
 import com.example.managementApi.User.UserRepo;
 
+import com.example.managementApi.WeekTimeSheet.WeekTimeSheetService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -14,10 +15,12 @@ public class DayService {
 
     private final DayRepo dayRepo;
     private final UserRepo userRepo ;
+    private final WeekTimeSheetService weekTimeSheetService;
     @Autowired
-    public DayService(DayRepo dayRepo, UserRepo userRepo) {
+    public DayService(DayRepo dayRepo, UserRepo userRepo, WeekTimeSheetService weekTimeSheetService) {
         this.dayRepo = dayRepo;
         this.userRepo = userRepo;
+        this.weekTimeSheetService = weekTimeSheetService;
     }
 
 
@@ -28,16 +31,24 @@ public class DayService {
                 int hours = (int)ChronoUnit.HOURS.between(day.getBeginTime(),day.getEndTime());
                 if (hours == day.getNumberHours()){
                     day.setApproved(false);
-                    if (day.isOverTimed()) if (hours > 8) result = dayRepo.save(day);
-                    else throw new IllegalStateException("if it overtime must be more than 8 hours");
-                    else result = dayRepo.save(day);
+                    if (day.isOverTimed()) {
+                        if (hours > 8) {
+                            result = dayRepo.save(day);
+                        } else {
+                            throw new IllegalStateException("if it overtime must be more than 8 hours");
+                        }
+                    } else {
+                        result = dayRepo.save(day);
+                    }
+                    if(day.getFullDate().getDayOfWeek().getValue() == 5){
+                        weekTimeSheetService.AddWeekTimeSheetInFriday(day);
+                    }
                     return result;
-                }else
-                    System.out.println(hours);
-                System.out.println(day.getNumberHours());
-                throw new IllegalStateException("the difference between the two times should be identical to number Of hours");
+                }else throw new IllegalStateException("the difference between the two times should be identical to number Of hours");
             }else throw new IllegalStateException("this day already declared");
+
         } else throw new IllegalStateException("this user doesn't exist");
+
         }
 
     private int diffBetweenTwoTime(Day day) {

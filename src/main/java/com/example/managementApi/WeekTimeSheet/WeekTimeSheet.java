@@ -18,14 +18,15 @@ import javax.persistence.*;
 public class WeekTimeSheet {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int weekId;
 
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "beginning_of_week")
+    @ManyToOne
+    @JoinColumn(name = "beginning_of_week",nullable = false)
     private Day beginningOfWeek;
 
-    @OneToOne(cascade =CascadeType.ALL)
-    @JoinColumn(name = "end_of_week")
+    @ManyToOne
+    @JoinColumn(name = "end_of_week",nullable = false)
     private Day endOfWeek;
 
     private int totalNhours;

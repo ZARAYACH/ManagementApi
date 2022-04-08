@@ -5,10 +5,7 @@ import com.example.managementApi.WeekTimeSheet.WeekTimeSheet;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import javax.persistence.*;
 import java.time.LocalDate;
@@ -51,11 +48,16 @@ public class Day {
     @JsonBackReference
     @JoinColumn(name = "user_id")
     private User user;
-    @JsonIgnore
-    @OneToOne(mappedBy = "beginningOfWeek")
-    private WeekTimeSheet beginningOfWeek;
-    @JsonIgnore
-    @OneToOne(mappedBy = "endOfWeek")
-    private WeekTimeSheet endOfWeek;
 
+
+    public Day(LocalDate fullDate, LocalTime beginTime, LocalTime endTime, int numberHours, boolean isWorked, boolean isOverTimed, boolean isApproved, User user) {
+        this.fullDate = fullDate;
+        this.beginTime = beginTime;
+        this.endTime = endTime;
+        this.numberHours = numberHours;
+        this.isWorked = isWorked;
+        this.isOverTimed = isOverTimed;
+        this.isApproved = isApproved;
+        this.user = user;
+    }
 }

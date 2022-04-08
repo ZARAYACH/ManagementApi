@@ -33,6 +33,19 @@ public class WeekTimeSheetService {
             if (dayInWeekNumber == 5){
                 LocalDate BeginningOfWeek = fullDate.minusDays(4);
                 LocalDate endOfWeek = fullDate.plusDays(2);
+                for (int i = 1;i<3;i++){
+                    if(fullDate.plusDays(i).getDayOfWeek().getValue() == 6 ||
+                            fullDate.plusDays(i).getDayOfWeek().getValue() == 7){
+                        dayRepo.save(new Day(fullDate.plusDays(i),
+                                null,
+                                null,
+                                0,
+                                false,
+                                false,
+                                false,
+                                day.getUser()));
+                    }
+                }
                 List<Day> daysOfweek= dayRepo.getDaysOfWeekByUserId(day.getUser().getId(),BeginningOfWeek,endOfWeek);
 
                 var weekTimeSheet = new WeekTimeSheet();

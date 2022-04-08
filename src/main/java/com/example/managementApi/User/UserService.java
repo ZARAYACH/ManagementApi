@@ -1,5 +1,6 @@
 package com.example.managementApi.User;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +29,7 @@ public class UserService {
             employee.setUserCredentials(null);
             employees.add(employee);
         }
+
         return employees;
     }
 
@@ -93,7 +95,7 @@ public class UserService {
     }
 
     public ResponseEntity<HttpStatus> deleteEmployee(int userID) {
-        ResponseEntity response = null;
+        ResponseEntity response ;
         if (userRepo.existsById(userID)) {
             userRepo.deleteById(userID);
             if (!userRepo.existsById(userID)) response = new ResponseEntity<HttpStatus>(HttpStatus.OK);
