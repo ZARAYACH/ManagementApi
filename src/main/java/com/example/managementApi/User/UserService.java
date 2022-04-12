@@ -1,27 +1,29 @@
 package com.example.managementApi.User;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.example.managementApi.Security.PasswordEncoder;
+import com.example.managementApi.UserCredentiels.UserCredentials;
+import com.example.managementApi.UserCredentiels.UserCredentialsService;
+import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import javax.servlet.http.HttpSession;
 import java.util.*;
 
-
+@AllArgsConstructor
 @Service
 public class UserService {
 
     private final UserRepo userRepo;
+    private final BCryptPasswordEncoder passwordEncoder;
+    private final UserCredentialsService userCredentialsService;
 
-    @Autowired
-    public UserService(UserRepo userRepo) {
-        this.userRepo = userRepo;
-    }
-
-    public List<User> getAllEmployeeInfoWithoutWeekAndDay() {
-        List<User> users = userRepo.findAll();
+    public List<User> getAllEmployeeInfoWithoutWeekAndDay(HttpSession session) {
+        User user = (User) session.getAttribute("user");
+        List<User> users = userRepo.getAllUserBySuperVisorId(user.getSuperVisorId());
         List<User> employees = new ArrayList<>();
         for (User employee : users) {
             employee.setDays(null);
@@ -32,23 +34,21 @@ public class UserService {
 
         return employees;
     }
-
     public User addEmployee(User user) {
-        User save;
         if (!checkUserIsEmpty(user)) {
             if (validEmail(user)) {
                 if (!checkExistingEmail(user)) {
-                    save = userRepo.save(user);
-                } else {
-                    throw new IllegalStateException("This user is already exist");
-                }
-            } else {
-                throw new IllegalStateException("This email is wrong");
-            }
-        } else {
-            throw new IllegalStateException("one or more field is empty");
-        }
-        return save;
+                   if (user.getUserCredentials() != null){
+                       user.getUserCredentials().setEmail(user.getEmail());
+                       if (userCredentialsService.cheekStrongestOfPassword(user.getUserCredentials())){
+                           user.getUserCredentials().setPassword(passwordEncoder.encode(user.getUserCredentials().getPassword()));
+                       }else throw new IllegalStateException("the password must be strong");
+                       user.getUserCredentials().setUser(user);
+                       return userRepo.save(user);
+                   }else throw new IllegalStateException("you can't add a user without Credentials");
+                } else throw new IllegalStateException("This user is already exist");
+            } else throw new IllegalStateException("This email is wrong");
+        } else throw new IllegalStateException("one or more field is empty");
     }
 
     private boolean checkExistingEmail(User user) {
@@ -84,8 +84,6 @@ public class UserService {
                 user.getFirstName().isBlank() ||
                 user.getLastName().isBlank() ||
                 user.getEmail().isBlank() ||
-                user.getRole().isBlank() ||
-                user.getLevel().isBlank() ||
                 user.getPhone().isBlank();
 
     }
@@ -115,16 +113,15 @@ public class UserService {
                         userTemp.getLastName(),
                         userTemp.getEmail(),
                         userTemp.getRole(),
-                        userTemp.getLevel(),
+                        userTemp.getJobTitle(),
                         userTemp.getPhone(),
                         userTemp.getSuperVisorId());
             } else throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         } else throw new ResponseStatusException(HttpStatus.NOT_FOUND);
     }
 
-    public User getUserInfo(Integer userID) {
-        if (userRepo.existsById(userID)) {
-            User tempUser = userRepo.findById(userID).get();
+    public User getUserInfo(User tempUser) {
+        if (userRepo.existsById(tempUser.getId())) {
             User user = new User();
             user.setId(tempUser.getId());
             user.setFirstName(tempUser.getFirstName());
@@ -132,7 +129,7 @@ public class UserService {
             user.setEmail(tempUser.getEmail());
             user.setRole(tempUser.getRole());
             user.setPhone(tempUser.getPhone());
-            user.setLevel(tempUser.getLevel());
+            user.setJobTitle(tempUser.getJobTitle());
             user.setSuperVisorId(tempUser.getSuperVisorId());
             user.setActive(tempUser.isActive());
             return user;

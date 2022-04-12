@@ -30,6 +30,7 @@ public class WeekTimeSheet {
     private Day endOfWeek;
 
     private int totalNhours;
+    private boolean isApproved;
 
     @ManyToOne
     @JoinColumn(name = "user_id",nullable = false)

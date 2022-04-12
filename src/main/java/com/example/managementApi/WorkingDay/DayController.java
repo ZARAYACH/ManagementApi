@@ -1,19 +1,17 @@
 package com.example.managementApi.WorkingDay;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpSession;
 import java.util.List;
 
+@AllArgsConstructor
 @RestController
 @RequestMapping(path = "api/v1/WorkingDays")
 public class DayController {
 
     private final DayService dayService;
-    @Autowired
-    public DayController(DayService dayService) {
-        this.dayService = dayService;
-    }
 
     //employee's methods
     @GetMapping(path = "/employee/{userId}/all")
@@ -31,7 +29,14 @@ public class DayController {
         return dayService.addDay(day);
     }
 
-//    suprvisors method
+    //TODO:when it's not approved he can change but if its submitted friday you have to change the week time sheet also it may be complicated
+
+//    @PutMapping(path = "/employee/{userId}/modify/{dayId}" )
+//    public Day modifyUnApprovedDay(@PathVariable int userId, @PathVariable int dayId,@RequestBody Day day){
+//        return dayService.modifyUnApprovedDay(userId,dayId,day);
+//    }
+
+//    supervisors method
     @PostMapping(path = "/supervisor/add")
     public Day addDayForSupervisor(@RequestBody final Day day){
         return dayService.addDay(day);

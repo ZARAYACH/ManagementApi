@@ -5,6 +5,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpSession;
 import java.util.List;
 
 @RestController
@@ -17,9 +18,17 @@ public class UserController {
         this.userService = userService;
     }
 
+//    @GetMapping( path = "/testSession")
+//    public User testSession(HttpSession session){
+//        User user = userService.getUserInfo();
+//        session.setAttribute("user",user);
+//        return (User)session.getAttribute("user");
+//    }
+
+
     @GetMapping("/supervisor/employee/all")
-    public List<User> getAllEmployee(){
-        return userService.getAllEmployeeInfoWithoutWeekAndDay();
+    public List<User> getAllEmployee(HttpSession session){
+        return userService.getAllEmployeeInfoWithoutWeekAndDay(session);
     }
 
     @PostMapping("/supervisor/employee/add")
@@ -36,11 +45,15 @@ public class UserController {
     public ResponseEntity<HttpStatus> deleteEmployee(@PathVariable int userId){
         return userService.deleteEmployee(userId);
     }
+    @GetMapping(path = "/supervisor/all")
+    public User getInfoSuperVisor(HttpSession session){
+        return userService.getUserInfo((User)session.getAttribute("user"));//TODO:return the info of the authenticate User only
+    }
 
     //employee methods
     @GetMapping(path = "/employee/{userID}")
-    public User getInfoEmployee(@PathVariable Integer userID){
-        return userService.getUserInfo(userID);//TODO:return the info of the authenticate User only
+    public User getInfoEmployee(HttpSession session ){
+        return userService.getUserInfo((User)session.getAttribute("user"));//TODO:return the info of the authenticate User only
     }
     @GetMapping(path = "/employee/{userId}/supervisor")
     public User getInfoOfMySupervisor(@PathVariable Integer userId){

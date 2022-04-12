@@ -26,12 +26,6 @@ public class Day {
     @Column(name = "full_date")
     private LocalDate fullDate;
 
-    @Column(name = "begin_time")
-    private LocalTime beginTime;
-
-    @Column(name = "end_time")
-    private LocalTime endTime;
-
     @Column(name = "n_hour")
     private int numberHours;
 
@@ -44,16 +38,20 @@ public class Day {
     @Column(name = "is_approved")
     private boolean isApproved;
 
+    @Column
+    private String unWorkedHoursReason;
+
+    @Column
+    private int UnWorkedNHours;
+
     @ManyToOne
     @JsonBackReference
     @JoinColumn(name = "user_id")
     private User user;
 
 
-    public Day(LocalDate fullDate, LocalTime beginTime, LocalTime endTime, int numberHours, boolean isWorked, boolean isOverTimed, boolean isApproved, User user) {
+    public Day(LocalDate fullDate, int numberHours, boolean isWorked, boolean isOverTimed, boolean isApproved, User user) {
         this.fullDate = fullDate;
-        this.beginTime = beginTime;
-        this.endTime = endTime;
         this.numberHours = numberHours;
         this.isWorked = isWorked;
         this.isOverTimed = isOverTimed;

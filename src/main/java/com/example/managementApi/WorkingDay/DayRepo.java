@@ -23,4 +23,6 @@ public interface DayRepo extends JpaRepository<Day, Integer> {
     List<Day> getAllWorkedDaysWithId(int userId);
 
     boolean existsByFullDateAndUserId(LocalDate fullDate, int id);
+
+    boolean existsByIdAndUserId(int id,int userId);
 }
