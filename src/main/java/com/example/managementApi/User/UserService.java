@@ -1,11 +1,10 @@
 package com.example.managementApi.User;
 
-import com.example.managementApi.Security.PasswordEncoder;
-import com.example.managementApi.UserCredentiels.UserCredentials;
 import com.example.managementApi.UserCredentiels.UserCredentialsService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -21,8 +20,10 @@ public class UserService {
     private final BCryptPasswordEncoder passwordEncoder;
     private final UserCredentialsService userCredentialsService;
 
-    public List<User> getAllEmployeeInfoWithoutWeekAndDay(HttpSession session) {
-        User user = (User) session.getAttribute("user");
+    public List<User> getAllEmployeeInfoWithoutWeekAndDay(Authentication authentication) {
+        String email = authentication.getPrincipal().toString();
+        System.out.println(email);
+        User user = userRepo.getUserByEmail(email);
         List<User> users = userRepo.getAllUserBySuperVisorId(user.getSuperVisorId());
         List<User> employees = new ArrayList<>();
         for (User employee : users) {
@@ -31,7 +32,6 @@ public class UserService {
             employee.setUserCredentials(null);
             employees.add(employee);
         }
-
         return employees;
     }
     public User addEmployee(User user) {
@@ -39,6 +39,7 @@ public class UserService {
             if (validEmail(user)) {
                 if (!checkExistingEmail(user)) {
                    if (user.getUserCredentials() != null){
+//                       user.setRole("ROLE_"+user.getRole().toUpperCase());
                        user.getUserCredentials().setEmail(user.getEmail());
                        if (userCredentialsService.cheekStrongestOfPassword(user.getUserCredentials())){
                            user.getUserCredentials().setPassword(passwordEncoder.encode(user.getUserCredentials().getPassword()));
@@ -112,7 +113,7 @@ public class UserService {
                         userTemp.getFirstName(),
                         userTemp.getLastName(),
                         userTemp.getEmail(),
-                        userTemp.getRole(),
+                        userTemp.getRoles(),
                         userTemp.getJobTitle(),
                         userTemp.getPhone(),
                         userTemp.getSuperVisorId());
@@ -120,22 +121,19 @@ public class UserService {
         } else throw new ResponseStatusException(HttpStatus.NOT_FOUND);
     }
 
-    public User getUserInfo(User tempUser) {
-        if (userRepo.existsById(tempUser.getId())) {
+    public User getUserInfo(Authentication authentication) {
+        User tempUser = userRepo.getUserByEmail(authentication.getPrincipal().toString());
             User user = new User();
             user.setId(tempUser.getId());
             user.setFirstName(tempUser.getFirstName());
             user.setLastName(tempUser.getLastName());
             user.setEmail(tempUser.getEmail());
-            user.setRole(tempUser.getRole());
+            user.setRoles(tempUser.getRoles());
             user.setPhone(tempUser.getPhone());
             user.setJobTitle(tempUser.getJobTitle());
             user.setSuperVisorId(tempUser.getSuperVisorId());
             user.setActive(tempUser.isActive());
             return user;
-        } else
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-
     }
 
 //    in the working day service

@@ -3,6 +3,7 @@ package com.example.managementApi.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpSession;
@@ -25,10 +26,9 @@ public class UserController {
 //        return (User)session.getAttribute("user");
 //    }
 
-
     @GetMapping("/supervisor/employee/all")
-    public List<User> getAllEmployee(HttpSession session){
-        return userService.getAllEmployeeInfoWithoutWeekAndDay(session);
+    public List<User> getAllEmployee(Authentication authentication){
+        return userService.getAllEmployeeInfoWithoutWeekAndDay(authentication);
     }
 
     @PostMapping("/supervisor/employee/add")
@@ -46,14 +46,25 @@ public class UserController {
         return userService.deleteEmployee(userId);
     }
     @GetMapping(path = "/supervisor/all")
-    public User getInfoSuperVisor(HttpSession session){
-        return userService.getUserInfo((User)session.getAttribute("user"));//TODO:return the info of the authenticate User only
+    public User getInfoSuperVisor(Authentication authentication){
+        return userService.getUserInfo(authentication);//TODO:return the info of the authenticate User only
     }
 
     //employee methods
+    @GetMapping(path = "employee/test/{userId}")
+    public String test(){
+        return "working";
+
+    }
+    @GetMapping(path = "/supervisor/test")
+    public String testa(Authentication authentication){
+        return authentication.getPrincipal().toString();
+
+    }
+
     @GetMapping(path = "/employee/{userID}")
-    public User getInfoEmployee(HttpSession session ){
-        return userService.getUserInfo((User)session.getAttribute("user"));//TODO:return the info of the authenticate User only
+    public User getInfoEmployee(Authentication authentication ){
+        return userService.getUserInfo(authentication);
     }
     @GetMapping(path = "/employee/{userId}/supervisor")
     public User getInfoOfMySupervisor(@PathVariable Integer userId){

@@ -6,6 +6,7 @@ import com.example.managementApi.signInLogs.Logs;
 import com.example.managementApi.signInLogs.LogsRepo;
 import com.example.managementApi.signInLogs.LogsService;
 import lombok.AllArgsConstructor;
+import org.springframework.context.annotation.Bean;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
@@ -31,8 +32,7 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
         request.getSession().setAttribute("user",user);
         Logs log = new Logs(LocalDateTime.now(),null,
                details.getRemoteAddress(),
-                user);
-        logsRepo.save(log);
+                user);        logsRepo.save(log);
 
     }
 }

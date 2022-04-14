@@ -2,21 +2,19 @@ package com.example.managementApi.UserCredentiels;
 
 import com.example.managementApi.User.User;
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import javax.persistence.*;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@ToString
 @Entity
 @Table(name = "user_credentials")
 public class UserCredentials implements UserDetails {
@@ -49,8 +47,11 @@ public class UserCredentials implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        SimpleGrantedAuthority authority = new SimpleGrantedAuthority(getUser().getRole().name());
-        return Collections.singletonList(authority);
+        Collection<SimpleGrantedAuthority> authority = new ArrayList<>();
+        user.getRoles().forEach(role->
+                authority.add(new SimpleGrantedAuthority(role.getName())));
+        System.out.println(authority.toString());
+        return authority;
     }
 
     @Override

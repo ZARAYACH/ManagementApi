@@ -7,6 +7,7 @@ import com.example.managementApi.WorkingDay.DayRepo;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -88,20 +89,22 @@ public class WeekTimeSheetService {
     }
 
     //TODO:test this method
-    public List<WeekTimeSheet> getAllWeekTimeSheetByUser(Integer userId, Integer superVisorId) {
+    public List<WeekTimeSheet> getAllWeekTimeSheetByUser(Integer userId, Authentication authentication) {
+        User superVisor = userRepo.getUserByEmail(authentication.getPrincipal().toString());
         if (userRepo.existsById(userId)) {
             int userSuperVisorId = userRepo.findById(userId).get().getSuperVisorId();
-            if (userSuperVisorId == superVisorId) {
+            if (userSuperVisorId == superVisor.getId()) {
                 return weekTimeSheetRepo.getAllByUserId(userId);
             } else throw new IllegalStateException("you are note the superVisor of this employee");
         } else throw new IllegalStateException("this user doesn't exists");
     }
 
     //TODO:test it
-    public List<Day> getAllDaysOfAWeekByUserId(Integer weekId, Integer userId, Integer superVisorId) {
+    public List<Day> getAllDaysOfAWeekByUserId(Integer weekId, Integer userId,Authentication authentication) {
+        User superVisor = userRepo.getUserByEmail(authentication.getPrincipal().toString());
         if (userRepo.existsById(userId)) {
             int userSuperVisorId = userRepo.findById(userId).get().getSuperVisorId();
-            if (userSuperVisorId == superVisorId) {
+            if (userSuperVisorId == superVisor.getId()) {
                 if (weekTimeSheetRepo.existsByWeekIdAndAndUserId(weekId, userId)) {
                     WeekTimeSheet weekTimeSheet = weekTimeSheetRepo.findById(weekId).get();
                     LocalDate beginningOfWeek = weekTimeSheet.getBeginningOfWeek().getFullDate();
@@ -113,10 +116,11 @@ public class WeekTimeSheetService {
     }
 
     //TODO: test it
-    public ResponseEntity<HttpStatus> approvedAWorkedWeek(int weekId, int superVisorId, int userId) {
+    public ResponseEntity<HttpStatus> approvedAWorkedWeek(int weekId,Authentication authentication, int userId) {
+        User superVisor = userRepo.getUserByEmail(authentication.getPrincipal().toString());
         if (userRepo.existsById(userId)) {
             int userSuperVisorId = userRepo.findById(userId).get().getSuperVisorId();
-            if (userSuperVisorId == superVisorId) {
+            if (userSuperVisorId == superVisor.getId()) {
                 List<Day> days = approvedAllDaysOfAWeek(weekId, userId);
                 for (Day day : days) {
                     Day approvedDay = dayRepo.save(day);
@@ -138,10 +142,11 @@ public class WeekTimeSheetService {
     }
     //TODO:need test
 
-    public ResponseEntity<HttpStatus> aprrovedOneDay(int dayId, int userId, int supervisorId) {
+    public ResponseEntity<HttpStatus> aprrovedOneDay(int dayId, int userId, Authentication authentication) {
+        User superVisor = userRepo.getUserByEmail(authentication.getPrincipal().toString());
         if (userRepo.existsById(userId)) {
             int userSuperVisorId = userRepo.findById(userId).get().getSuperVisorId();
-            if (userSuperVisorId == supervisorId) {
+            if (userSuperVisorId == superVisor.getId()) {
                 if (dayRepo.existsByIdAndUserId(dayId, userId)) {
                     Day day = dayRepo.findById(dayId).get();
                     day.setApproved(true);
