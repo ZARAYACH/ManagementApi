@@ -19,16 +19,17 @@ import java.util.List;
 @Service
 public class WeekTimeSheetService {
 
-
     private final WeekTimeSheetRepo weekTimeSheetRepo;
     private final DayRepo dayRepo;
     private final UserRepo userRepo;
 
-    public List<WeekTimeSheet> getAllWeeklyTimeSheets(Integer userId) {
-        return weekTimeSheetRepo.getAllByUserId(userId);
+    public List<WeekTimeSheet> getAllWeeklyTimeSheets(Authentication authentication) {
+        User user = userRepo.getUserByEmail(authentication.getPrincipal().toString());
+        return weekTimeSheetRepo.getAllByUserId(user.getId());
     }
 
     public WeekTimeSheet AddWeekTimeSheetInFriday(Day day) {
+        User user = day.getUser();
         if (dayRepo.existsById(day.getId())) {
             LocalDate fullDate = day.getFullDate();
             int dayInWeekNumber = fullDate.getDayOfWeek().getValue();
@@ -37,7 +38,8 @@ public class WeekTimeSheetService {
                 LocalDate endOfWeek = fullDate.plusDays(2);
                 for (int i = 1; i < 3; i++) {
                     if (fullDate.plusDays(i).getDayOfWeek().getValue() == 6 ||
-                            fullDate.plusDays(i).getDayOfWeek().getValue() == 7) {
+                            fullDate.plusDays(i).getDayOfWeek().getValue() == 7 &&
+                                    !dayRepo.existsByFullDateAndUserId(fullDate.plusDays(i),user.getId())) {
                         dayRepo.save(new Day(fullDate.plusDays(i),
                                 0,
                                 false,
@@ -67,18 +69,17 @@ public class WeekTimeSheetService {
         return total;
     }
 
-    public WeekTimeSheet addWeekTimeSheet(WeekTimeSheet weekTimeSheet) {
+    public WeekTimeSheet addWeekTimeSheet(WeekTimeSheet weekTimeSheet,Authentication authentication) {
 
-        Day beginnigOfweek = weekTimeSheet.getBeginningOfWeek();
+        Day beginingOfweek= weekTimeSheet.getBeginningOfWeek();
         Day endingOfweek = weekTimeSheet.getEndOfWeek();
-        if (ChronoUnit.DAYS.between(beginnigOfweek.getFullDate(), endingOfweek.getFullDate()) == 7) {
-            User user = weekTimeSheet.getUser();
-            List<Day> weekDays = dayRepo.getDaysOfWeekByUserId(user.getId(), beginnigOfweek.getFullDate(), endingOfweek.getFullDate());
+        if (ChronoUnit.DAYS.between(beginingOfweek.getFullDate(), endingOfweek.getFullDate()) == 7) {
+            User user = userRepo.getUserByEmail(authentication.getPrincipal().toString());
+            List<Day> weekDays = dayRepo.getDaysOfWeekByUserId(user.getId(), beginingOfweek.getFullDate(), endingOfweek.getFullDate());
             int total = calculateTotalHoursWorked(weekDays);
-
             WeekTimeSheet weekTimeSheet1 = new WeekTimeSheet();
 
-            weekTimeSheet1.setBeginningOfWeek(beginnigOfweek);
+            weekTimeSheet1.setBeginningOfWeek(beginingOfweek);
             weekTimeSheet1.setEndOfWeek(endingOfweek);
             weekTimeSheet1.setUser(user);
             weekTimeSheet1.setTotalNhours(total);
@@ -88,11 +89,17 @@ public class WeekTimeSheetService {
         }
     }
 
+//    public ResponseEntity<?> getWeekTimeSheets(Authentication authentication,int page){
+//        User user = userRepo.getUserByEmail(authentication.getPrincipal().toString());
+//        return weekTimeSheetRepo.getWeekTimeSheetByDayAndUserIdLimeted(user.getId(),page);
+//    }
+
+
     //TODO:test this method
     public List<WeekTimeSheet> getAllWeekTimeSheetByUser(Integer userId, Authentication authentication) {
         User superVisor = userRepo.getUserByEmail(authentication.getPrincipal().toString());
         if (userRepo.existsById(userId)) {
-            int userSuperVisorId = userRepo.findById(userId).get().getSuperVisorId();
+            int userSuperVisorId = userRepo.getById(userId).getSuperVisorId();
             if (userSuperVisorId == superVisor.getId()) {
                 return weekTimeSheetRepo.getAllByUserId(userId);
             } else throw new IllegalStateException("you are note the superVisor of this employee");
@@ -103,10 +110,10 @@ public class WeekTimeSheetService {
     public List<Day> getAllDaysOfAWeekByUserId(Integer weekId, Integer userId,Authentication authentication) {
         User superVisor = userRepo.getUserByEmail(authentication.getPrincipal().toString());
         if (userRepo.existsById(userId)) {
-            int userSuperVisorId = userRepo.findById(userId).get().getSuperVisorId();
+            int userSuperVisorId = userRepo.getById(userId).getSuperVisorId();
             if (userSuperVisorId == superVisor.getId()) {
                 if (weekTimeSheetRepo.existsByWeekIdAndAndUserId(weekId, userId)) {
-                    WeekTimeSheet weekTimeSheet = weekTimeSheetRepo.findById(weekId).get();
+                    WeekTimeSheet weekTimeSheet = weekTimeSheetRepo.getById(weekId);
                     LocalDate beginningOfWeek = weekTimeSheet.getBeginningOfWeek().getFullDate();
                     LocalDate endingOfWeek = weekTimeSheet.getEndOfWeek().getFullDate();
                     return dayRepo.getDaysOfWeekByUserId(userId, beginningOfWeek, endingOfWeek);
@@ -116,25 +123,21 @@ public class WeekTimeSheetService {
     }
 
     //TODO: test it
-    public ResponseEntity<HttpStatus> approvedAWorkedWeek(int weekId,Authentication authentication, int userId) {
+    public ResponseEntity approvedAWorkedWeek(int weekId, Authentication authentication, int userId) {
         User superVisor = userRepo.getUserByEmail(authentication.getPrincipal().toString());
         if (userRepo.existsById(userId)) {
-            int userSuperVisorId = userRepo.findById(userId).get().getSuperVisorId();
+            int userSuperVisorId = userRepo.getById(userId).getSuperVisorId();
             if (userSuperVisorId == superVisor.getId()) {
                 List<Day> days = approvedAllDaysOfAWeek(weekId, userId);
-                for (Day day : days) {
-                    Day approvedDay = dayRepo.save(day);
-                }
-                WeekTimeSheet weekTimeSheet = weekTimeSheetRepo.findById(weekId).get();
+                dayRepo.saveAll(days);
+                WeekTimeSheet weekTimeSheet = weekTimeSheetRepo.getById(weekId);
                 weekTimeSheet.setApproved(true);
                 WeekTimeSheet result = weekTimeSheetRepo.save(weekTimeSheet);
                 if (result.isApproved()) {
-                    return new ResponseEntity<HttpStatus>(HttpStatus.OK);
+                    return new ResponseEntity(HttpStatus.OK);
                 } else {
                     List<Day> dayss = unapprovedAllDaysOfAWeek(weekId, userId);
-                    for (Day day : dayss) {
-                        dayRepo.save(day);
-                    }
+                    dayRepo.saveAll(dayss);
                     return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
                 }
             } else throw new IllegalStateException("you are note the superVisor of this employee");
@@ -142,13 +145,13 @@ public class WeekTimeSheetService {
     }
     //TODO:need test
 
-    public ResponseEntity<HttpStatus> aprrovedOneDay(int dayId, int userId, Authentication authentication) {
+    public ResponseEntity<HttpStatus> approvedOneDay(int dayId, int userId, Authentication authentication) {
         User superVisor = userRepo.getUserByEmail(authentication.getPrincipal().toString());
         if (userRepo.existsById(userId)) {
-            int userSuperVisorId = userRepo.findById(userId).get().getSuperVisorId();
+            int userSuperVisorId = userRepo.getById(userId).getSuperVisorId();
             if (userSuperVisorId == superVisor.getId()) {
                 if (dayRepo.existsByIdAndUserId(dayId, userId)) {
-                    Day day = dayRepo.findById(dayId).get();
+                    Day day = dayRepo.getById(userId);
                     day.setApproved(true);
                      dayRepo.save(day);
                      return new ResponseEntity<>(HttpStatus.OK);
@@ -161,8 +164,8 @@ public class WeekTimeSheetService {
     //TODO: test it
     private List<Day> approvedAllDaysOfAWeek(int weekId, int userId) {
         if (weekTimeSheetRepo.existsByWeekIdAndAndUserId(weekId, userId)) {
-            LocalDate beginningOfWeek = weekTimeSheetRepo.findById(weekId).get().getBeginningOfWeek().getFullDate();
-            LocalDate endOfWeek = weekTimeSheetRepo.findById(weekId).get().getEndOfWeek().getFullDate();
+            LocalDate beginningOfWeek = weekTimeSheetRepo.getById(weekId).getBeginningOfWeek().getFullDate();
+            LocalDate endOfWeek = weekTimeSheetRepo.getById(weekId).getEndOfWeek().getFullDate();
             List<Day> days = dayRepo.getDaysOfWeekByUserId(userId, beginningOfWeek, endOfWeek);
             for (Day day : days) {
                 day.setApproved(true);
@@ -174,8 +177,8 @@ public class WeekTimeSheetService {
     //TODO: test it
     private List<Day> unapprovedAllDaysOfAWeek(int weekId, int userId) {
         if (weekTimeSheetRepo.existsByWeekIdAndAndUserId(weekId, userId)) {
-            LocalDate beginningOfWeek = weekTimeSheetRepo.findById(weekId).get().getBeginningOfWeek().getFullDate();
-            LocalDate endOfWeek = weekTimeSheetRepo.findById(weekId).get().getEndOfWeek().getFullDate();
+            LocalDate beginningOfWeek = weekTimeSheetRepo.getById(weekId).getBeginningOfWeek().getFullDate();
+            LocalDate endOfWeek = weekTimeSheetRepo.getById(weekId).getEndOfWeek().getFullDate();
             List<Day> days = dayRepo.getDaysOfWeekByUserId(userId, beginningOfWeek, endOfWeek);
             for (Day day : days) {
                 day.setApproved(false);
@@ -184,5 +187,18 @@ public class WeekTimeSheetService {
         } else throw new IllegalStateException("this week isn't exist by this user");
     }
 
+    public void refreshAWeekTimeSheet(int weekId,int userId){
+        WeekTimeSheet weekTimeSheet = weekTimeSheetRepo.getById(weekId);
+        LocalDate beginningOfWeek = weekTimeSheet.getBeginningOfWeek().getFullDate();
+        LocalDate endOfWeek = weekTimeSheet.getEndOfWeek().getFullDate();
+        List<Day> days = dayRepo.getDaysOfWeekByUserId(userId,beginningOfWeek,endOfWeek);
+        int total = calculateTotalHoursWorked(days);
+        weekTimeSheet.setTotalNhours(total);
+        weekTimeSheetRepo.save(weekTimeSheet);
+    }
+
+    public WeekTimeSheet getWeekTimeSheetByDayAndByUserId(LocalDate fullDate, int id) {
+        return weekTimeSheetRepo.getWeekTimeSheetByDayAndUserId(fullDate,id);
+    }
 }
 

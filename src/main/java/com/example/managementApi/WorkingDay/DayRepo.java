@@ -25,4 +25,5 @@ public interface DayRepo extends JpaRepository<Day, Integer> {
     boolean existsByFullDateAndUserId(LocalDate fullDate, int id);
 
     boolean existsByIdAndUserId(int id,int userId);
+
 }

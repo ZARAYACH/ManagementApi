@@ -15,8 +15,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import java.nio.file.AccessDeniedException;
-
 
 @Configuration
 @AllArgsConstructor
@@ -42,6 +40,7 @@ public class ApplicationSecurity extends WebSecurityConfigurerAdapter {
                 .addFilterBefore(new CustomAuthorizationFilter(), UsernamePasswordAuthenticationFilter.class)
                 .authorizeRequests()
                 .antMatchers("/login").permitAll()
+                .antMatchers("/api/v1/token/refresh").permitAll()
                 .antMatchers("/api/v1/supervisor/**").hasRole("SUPERVISOR")
                 .antMatchers("/api/v1/employee/**").hasRole("EMPLOYEE")
                 .anyRequest().authenticated();

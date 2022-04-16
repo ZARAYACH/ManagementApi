@@ -22,9 +22,8 @@ public class UserService {
 
     public List<User> getAllEmployeeInfoWithoutWeekAndDay(Authentication authentication) {
         String email = authentication.getPrincipal().toString();
-        System.out.println(email);
         User user = userRepo.getUserByEmail(email);
-        List<User> users = userRepo.getAllUserBySuperVisorId(user.getSuperVisorId());
+        List<User> users = userRepo.getAllUserBySuperVisorId(user.getSuperVisorId(),user.getId());
         List<User> employees = new ArrayList<>();
         for (User employee : users) {
             employee.setDays(null);

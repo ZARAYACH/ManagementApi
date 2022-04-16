@@ -8,4 +8,6 @@ public interface
 UserCredentialsRepo extends JpaRepository<UserCredentials,Integer> {
 
     UserCredentials findByEmail(String email);
+
+    UserCredentials getByEmail(String email);
 }
