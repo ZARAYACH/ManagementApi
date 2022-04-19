@@ -1,7 +1,6 @@
 package com.example.managementApi.Jwts;
 
 import lombok.AllArgsConstructor;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -13,13 +12,13 @@ import java.io.IOException;
 
 @RestController
 @AllArgsConstructor
-@RequestMapping("api/v1/token")
+@RequestMapping("/api/v1/token")
 public class RefreshTokenController {
 
     private final JwtsService jwtsService;
 
     @PostMapping(path = "/refresh")
-    public void getAccessTokenByRefreshToken(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
-        jwtsService.getAccessTokenByRefreshToken(request,response,authentication);
+    public void getAccessTokenByRefreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        jwtsService.getAccessTokenByRefreshToken(request,response);
         }
 }

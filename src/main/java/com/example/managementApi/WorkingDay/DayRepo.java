@@ -26,4 +26,5 @@ public interface DayRepo extends JpaRepository<Day, Integer> {
 
     boolean existsByIdAndUserId(int id,int userId);
 
+    List<Day> getAllByUserId(int employeeId);
 }

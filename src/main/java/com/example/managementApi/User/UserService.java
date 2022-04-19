@@ -1,6 +1,8 @@
 package com.example.managementApi.User;
 
+import com.example.managementApi.MailSender.JavaEmailSenderService;
 import com.example.managementApi.UserCredentiels.UserCredentialsService;
+import com.example.managementApi.Verification.VerificationTokenService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -9,7 +11,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import javax.servlet.http.HttpSession;
 import java.util.*;
 
 @AllArgsConstructor
@@ -19,11 +20,13 @@ public class UserService {
     private final UserRepo userRepo;
     private final BCryptPasswordEncoder passwordEncoder;
     private final UserCredentialsService userCredentialsService;
+    private final VerificationTokenService verficationTokenService;
+    private final JavaEmailSenderService emailSenderService;
 
     public List<User> getAllEmployeeInfoWithoutWeekAndDay(Authentication authentication) {
         String email = authentication.getPrincipal().toString();
         User user = userRepo.getUserByEmail(email);
-        List<User> users = userRepo.getAllUserBySuperVisorId(user.getSuperVisorId(),user.getId());
+        List<User> users = userRepo.getAllUserBySuperVisorId(user.getSuperVisorId(), user.getId());
         List<User> employees = new ArrayList<>();
         for (User employee : users) {
             employee.setDays(null);
@@ -33,22 +36,30 @@ public class UserService {
         }
         return employees;
     }
+
     public User addEmployee(User user) {
         if (!checkUserIsEmpty(user)) {
             if (validEmail(user)) {
                 if (!checkExistingEmail(user)) {
-                   if (user.getUserCredentials() != null){
-//                       user.setRole("ROLE_"+user.getRole().toUpperCase());
-                       user.getUserCredentials().setEmail(user.getEmail());
-                       if (userCredentialsService.cheekStrongestOfPassword(user.getUserCredentials())){
-                           user.getUserCredentials().setPassword(passwordEncoder.encode(user.getUserCredentials().getPassword()));
-                       }else throw new IllegalStateException("the password must be strong");
-                       user.getUserCredentials().setUser(user);
-                       return userRepo.save(user);
-                   }else throw new IllegalStateException("you can't add a user without Credentials");
+                    user.getUserCredentials().setEmail(user.getEmail());
+                    user.getUserCredentials().setPassword(passwordEncoder.encode(generateRandomPassword()));
+                    user.getUserCredentials().setVerficationToken(verficationTokenService.generateVerificationToken());
+                    user.getUserCredentials().setUser(user);
+                    User saved =  userRepo.save(user);
+                    String link = "http://localhost:8080/api/v1/verifyAccount?token="+user.getUserCredentials().getVerficationToken()+"email="+user.getEmail();
+                    emailSenderService.SendHtmlEmail(user.getEmail(),
+                            "mohamedachbani50@gmail.com",
+                            "please verified your account ",
+                            "<h1>verified your cprofile management profile</h1" +
+                                    "<p>Please click <a href="+link+">HERE</a>to verified " + " your account </p>");
+                    return saved;
                 } else throw new IllegalStateException("This user is already exist");
             } else throw new IllegalStateException("This email is wrong");
         } else throw new IllegalStateException("one or more field is empty");
+    }
+
+    private String generateRandomPassword() {
+        return UUID.randomUUID().toString();
     }
 
     private boolean checkExistingEmail(User user) {
@@ -93,7 +104,7 @@ public class UserService {
     }
 
     public ResponseEntity<HttpStatus> deleteEmployee(int userID) {
-        ResponseEntity response ;
+        ResponseEntity response;
         if (userRepo.existsById(userID)) {
             userRepo.deleteById(userID);
             if (!userRepo.existsById(userID)) response = new ResponseEntity<HttpStatus>(HttpStatus.OK);
@@ -122,17 +133,17 @@ public class UserService {
 
     public User getUserInfo(Authentication authentication) {
         User tempUser = userRepo.getUserByEmail(authentication.getPrincipal().toString());
-            User user = new User();
-            user.setId(tempUser.getId());
-            user.setFirstName(tempUser.getFirstName());
-            user.setLastName(tempUser.getLastName());
-            user.setEmail(tempUser.getEmail());
-            user.setRoles(tempUser.getRoles());
-            user.setPhone(tempUser.getPhone());
-            user.setJobTitle(tempUser.getJobTitle());
-            user.setSuperVisorId(tempUser.getSuperVisorId());
-            user.setActive(tempUser.isActive());
-            return user;
+        User user = new User();
+        user.setId(tempUser.getId());
+        user.setFirstName(tempUser.getFirstName());
+        user.setLastName(tempUser.getLastName());
+        user.setEmail(tempUser.getEmail());
+        user.setRoles(tempUser.getRoles());
+        user.setPhone(tempUser.getPhone());
+        user.setJobTitle(tempUser.getJobTitle());
+        user.setSuperVisorId(tempUser.getSuperVisorId());
+        user.setActive(tempUser.isActive());
+        return user;
     }
 
 //    in the working day service

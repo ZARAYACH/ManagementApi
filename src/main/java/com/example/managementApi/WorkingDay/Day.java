@@ -1,15 +1,12 @@
 package com.example.managementApi.WorkingDay;
 
 import com.example.managementApi.User.User;
-import com.example.managementApi.WeekTimeSheet.WeekTimeSheet;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
 import javax.persistence.*;
 import java.time.LocalDate;
-import java.time.LocalTime;
 
 @Entity
 @Table( name = "day")
@@ -21,6 +18,7 @@ public class Day {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
+    @JsonBackReference
     private int id;
 
     @Column(name = "full_date")
@@ -42,7 +40,7 @@ public class Day {
     private String unWorkedHoursReason;
 
     @Column
-    private int UnWorkedNHours;
+    private int unWorkedNHours;
 
     @ManyToOne
     @JsonBackReference
@@ -50,12 +48,14 @@ public class Day {
     private User user;
 
 
-    public Day(LocalDate fullDate, int numberHours, boolean isWorked, boolean isOverTimed, boolean isApproved, User user) {
+    public Day(LocalDate fullDate, int numberHours, boolean isWorked, boolean isOverTimed, boolean isApproved,int unWorkedNHours,String unWorkedHoursReason, User user) {
         this.fullDate = fullDate;
         this.numberHours = numberHours;
         this.isWorked = isWorked;
         this.isOverTimed = isOverTimed;
         this.isApproved = isApproved;
+        this.unWorkedNHours = unWorkedNHours;
+        this.unWorkedHoursReason  = unWorkedHoursReason;
         this.user = user;
     }
 }

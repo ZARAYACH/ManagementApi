@@ -39,9 +39,8 @@ public class DayService {
                     day.setOverTimed(false);
                     if (day.getNumberHours() + day.getUnWorkedNHours() == 8) {
                         result = dayRepo.save(day);
-                    } else {
+                    } else
                         throw new IllegalStateException("it is required to have 8hours per day even if its not worked");
-                    }
                 } else if (day.getNumberHours() == 8) {
                     day.setOverTimed(false);
                     day.setUnWorkedHoursReason(null);
@@ -88,7 +87,7 @@ public class DayService {
         }else return ResponseEntity.notFound().build();
     }
 
-    public ResponseEntity<?> updateUnapprovedDay(Day newDay,Authentication authentication){
+    public ResponseEntity<?> modifyUnApprovedDay(Day newDay,Authentication authentication){
      User user = userRepo.getUserByEmail(authentication.getPrincipal().toString());
      if (dayRepo.existsById(newDay.getId())){
          Day oldDay = dayRepo.getById(newDay.getId());
@@ -111,5 +110,15 @@ public class DayService {
              return ResponseEntity.status(HttpStatus.FORBIDDEN).body("you can't update a approved day please contact your supervisor");
          }
      }else return ResponseEntity.notFound().build();
+    }
+
+    public ResponseEntity<?> getWorkingDaysBySuperVisorEmployee(int employeeId, Authentication authentication) {
+        User superVisor = userRepo.getUserByEmail(authentication.getPrincipal().toString());
+        if (userRepo.existsById(employeeId)){
+            User employee = userRepo.getById(employeeId);
+            if (employee.getSuperVisorId() == superVisor.getId()){
+               return ResponseEntity.ok().body(dayRepo.getAllByUserId(employeeId));
+            }else return ResponseEntity.status(HttpStatus.FORBIDDEN).body("this user is not under your supervision");
+        }else return ResponseEntity.notFound().build();
     }
 }

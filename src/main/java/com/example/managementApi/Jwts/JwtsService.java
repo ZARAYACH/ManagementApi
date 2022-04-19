@@ -8,7 +8,6 @@ import com.example.managementApi.UserCredentiels.UserCredentials;
 import com.example.managementApi.UserCredentiels.UserCredentialsRepo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Service;
@@ -19,7 +18,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.sql.Date;
 import java.time.LocalDate;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -35,29 +33,27 @@ public class JwtsService {
 
     public String createJwtAccessToken(HttpServletRequest request, User user){
         Algorithm algorithmAccess = Algorithm.HMAC256("secretsecretsecretsecretsecretsecretsecret".getBytes(StandardCharsets.UTF_8));
-        String access_token = JWT.create()
+        return JWT.create()
                 .withSubject(user.getUsername())
                 .withClaim("roles", user.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()))
                 .withIssuedAt(Date.valueOf(LocalDate.now()))
-                .withExpiresAt(new Date(System.currentTimeMillis() + 2 * 60 * 1000))
+                .withExpiresAt(new Date(System.currentTimeMillis() + 15 * 60 * 1000))
                 .withIssuer(request.getRequestURL().toString())
                 .sign(algorithmAccess);
-        return access_token;
     }
 
     public String createJwtRefreshToken(HttpServletRequest request,User user){
         Algorithm algorithmRefresh = Algorithm.HMAC256("refreshrefreshrefreshrefreshrefreshrefreshrefresh".getBytes(StandardCharsets.UTF_8));
-        String refresh_token = JWT.create()
+        return JWT.create()
                 .withSubject(user.getUsername())
                 .withIssuedAt(Date.valueOf(LocalDate.now()))
                 .withExpiresAt(Date.valueOf(LocalDate.now().plusMonths(4)))
                 .withClaim("roles", user.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()))
                 .withIssuer(request.getRequestURL().toString())
                 .sign(algorithmRefresh);
-        return refresh_token;
     }
 
-    public void getAccessTokenByRefreshToken(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
+    public void getAccessTokenByRefreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String refreshTokenHeader = request.getHeader("refreshToken");
         if (refreshTokenHeader !=null && refreshTokenHeader.startsWith("Bearer ")){
             String refresh_token =   refreshTokenHeader.substring("Bearer ".length());
@@ -85,8 +81,8 @@ public class JwtsService {
                 response.setStatus(FORBIDDEN.value());
                 response.setContentType(APPLICATION_JSON_VALUE);
                 HashMap<String,String> error = new HashMap<>();
-                error.put("error",e.getMessage().toString());
-                System.out.println(e.getMessage().toString());
+                error.put("error",e.getMessage());
+                System.out.println(e.getMessage());
                 new ObjectMapper().writeValue(response.getOutputStream(),error.toString());
                 e.printStackTrace();
 

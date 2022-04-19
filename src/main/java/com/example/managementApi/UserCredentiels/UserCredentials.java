@@ -33,6 +33,9 @@ public class UserCredentials implements UserDetails {
     @Column
     private boolean isActive = true;
 
+    @Column
+    private String verficationToken;
+
     @JsonBackReference
     @OneToOne(mappedBy = "userCredentials")
     private User user;

@@ -2,6 +2,8 @@ package com.example.managementApi.WeekTimeSheet;
 
 import com.example.managementApi.User.User;
 import com.example.managementApi.WorkingDay.Day;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -23,10 +25,12 @@ public class WeekTimeSheet {
 
     @ManyToOne
     @JoinColumn(name = "beginning_of_week",nullable = false)
+    @JsonManagedReference
     private Day beginningOfWeek;
 
     @ManyToOne
     @JoinColumn(name = "end_of_week",nullable = false)
+    @JsonManagedReference
     private Day endOfWeek;
 
     private int totalNhours;
@@ -34,6 +38,7 @@ public class WeekTimeSheet {
 
     @ManyToOne
     @JoinColumn(name = "user_id",nullable = false)
+    @JsonIgnore
     private User user;
 
 }

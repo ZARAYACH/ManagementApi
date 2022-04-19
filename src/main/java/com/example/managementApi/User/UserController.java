@@ -10,7 +10,7 @@ import javax.servlet.http.HttpSession;
 import java.util.List;
 
 @RestController
-@RequestMapping(path = "api/v1")
+@RequestMapping(path = "/api/v1")
 public class UserController {
     private final UserService userService ;
 
@@ -18,13 +18,6 @@ public class UserController {
     public UserController(UserService userService) {
         this.userService = userService;
     }
-
-//    @GetMapping( path = "/testSession")
-//    public User testSession(HttpSession session){
-//        User user = userService.getUserInfo();
-//        session.setAttribute("user",user);
-//        return (User)session.getAttribute("user");
-//    }
 
     @GetMapping("/supervisor/employee/all")
     public List<User> getAllEmployee(Authentication authentication){

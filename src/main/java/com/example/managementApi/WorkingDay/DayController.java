@@ -1,6 +1,7 @@
 package com.example.managementApi.WorkingDay;
 
 import lombok.AllArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -9,7 +10,7 @@ import java.util.List;
 
 @AllArgsConstructor
 @RestController
-@RequestMapping(path = "api/v1")
+@RequestMapping(path = "/api/v1")
 public class DayController {
 
     private final DayService dayService;
@@ -30,24 +31,28 @@ public class DayController {
         return dayService.addDay(day,authentication);
 
     }
-//    @DeleteMapping(path = "/employee/WorkingDay/{dayId}/delete")
-//    public Day addDayForEmployee(@PathVariable int dayId,Authentication authentication) {
-//        return dayService.deleteUnapprovedDay(dayId,authentication);
-//
-//    }
+    @DeleteMapping(path = "/employee/WorkingDay/{dayId}/delete")
+    public ResponseEntity<?> addDayForEmployee(@PathVariable int dayId,Authentication authentication) {
+        return dayService.deleteUnapprovedDay(dayId,authentication);
 
-    //TODO:when it's not approved he can change but if its submitted friday you have to change the week time sheet also it may be complicated
+    }
 
-//    @PutMapping(path = "/employee/{userId}/modify/{dayId}" )
-//    public Day modifyUnApprovedDay(@PathVariable int userId, @PathVariable int dayId,@RequestBody Day day){
-//        return dayService.modifyUnApprovedDay(userId,dayId,day);
-//    }
+    //TODO:TEST IT
+
+    @PutMapping(path = "/employee/WorkingDay/modify/day" )
+    public ResponseEntity<?> modifyUnApprovedDay(@RequestBody Day day, Authentication authentication){
+        return dayService.modifyUnApprovedDay(day,authentication);
+    }
 
 //    supervisors method
-    @PostMapping(path = "/supervisor/add")
+    @PostMapping(path = "/supervisor/WorkingDay/add")
     public Day addDayForSupervisor(@RequestBody Day day,Authentication authentication){
         return dayService.addDay(day,authentication);
     }
 
+    @GetMapping(path = "/supervisor/WorkingDay/employee/{employeeId}")
+    public ResponseEntity<?> addDayForSupervisor(@PathVariable int employeeId,Authentication authentication){
+        return dayService.getWorkingDaysBySuperVisorEmployee(employeeId,authentication);
+    }
 
 }
